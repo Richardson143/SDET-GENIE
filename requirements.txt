@@ -2,6 +2,7 @@ lavague==1.1.17
 llama-index-embeddings-gemini==0.1.8
 llama-index-llms-gemini==0.1.11
 llama-index-multi-modal-llms-gemini==0.1.7
+llama-index-readers-file==0.1.32
 streamlit==1.33.0
 streamlit-camera-input-live==0.2.0
 streamlit-card==1.0.2
