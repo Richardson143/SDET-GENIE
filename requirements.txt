@@ -323,7 +323,7 @@ tbb==2021.12.0
 tenacity==8.2.3
 texify==0.1.9
 threadpoolctl==3.5.0
-tiktoken==0.5.2
+tiktoken==0.7.0
 tld==0.13
 tokenizers==0.19.1
 toml==0.10.2
