@@ -48,7 +48,7 @@ dill==0.3.8
 dirtyjson==1.0.8
 distro==1.9.0
 docstring-parser==0.15
-embedchain==0.1.102
+embedchain==0.1.120
 entrypoints==0.4
 etelemetry==0.3.1
 faiss-cpu==1.8.0
