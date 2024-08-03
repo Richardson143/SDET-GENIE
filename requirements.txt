@@ -130,7 +130,7 @@ lavague==1.1.17
 lavague-contexts-openai==0.2.0
 lavague-core==0.2.30
 lavague-drivers-selenium==0.2.12
-lavague-gradio==0.2.4
+lavague-gradio==0.2.8
 llama-cloud==0.0.6
 llama-index==0.10.50
 llama-index-agent-openai==0.2.7
