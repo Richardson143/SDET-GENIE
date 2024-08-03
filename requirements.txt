@@ -122,7 +122,7 @@ keyboard==0.13.5
 kiwisolver==1.4.5
 kubernetes==29.0.0
 langchain==0.2.12
-langchain-community==0.0.38
+langchain-community==0.2.11
 langchain-core==0.2.23
 langchain-google-genai==1.0.8
 langchain-google-vertexai==0.1.0
