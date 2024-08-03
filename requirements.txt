@@ -36,8 +36,6 @@ configparser==7.0.0
 contextlib2==21.6.0
 contourpy==1.2.1
 courlan==1.2.0
-crewai==0.28.8
-crewai-tools==0.1.7
 cryptography==42.0.5
 cycler==0.12.1
 dataclasses-json==0.6.4
