@@ -1,7 +1,6 @@
 lavague==1.1.19
 llama_index==0.10.61
 Pillow==9.3.0
-Pillow==10.4.0
 Requests==2.32.3
 selenium==4.23.1
 streamlit==1.29.0
@@ -12,4 +11,4 @@ streamlit==1.28.0
 streamlit==1.35.0
 streamlit==1.33.0
 streamlit_lottie==0.0.5
-web_agent==1.1.10
+
