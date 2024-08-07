@@ -25,6 +25,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from playwright.sync_api import sync_playwright
 
 # Initialize the LLM and other required components
 llm = Gemini(model_name="models/gemini-1.5-flash-latest", api_key=os.getenv("GOOGLE_API_KEY"))
@@ -436,111 +437,52 @@ def streamlit_webagent_demo(objective: str, url: str):
     st.json(result.__dict__)
 
 def identify_elements_and_generate_csv(url, output_file='elements.csv'):
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    driver.get(url)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(url)
 
-    def highlight_element(element):
-        driver.execute_script(
-            "arguments[0].setAttribute('style', arguments[1]);",
-            element,
-            "border: 2px solid red;"
-        )
+        # Find all elements with IDs
+        elements = page.query_selector_all('[id]')
 
-    def add_id_overlays(elements):
-        js_script = """
-        function addIdOverlay(element, id) {
-            const rect = element.getBoundingClientRect();
-            const overlay = document.createElement('div');
-            overlay.textContent = id;
-            overlay.style.position = 'absolute';
-            overlay.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
-            overlay.style.color = 'white';
-            overlay.style.padding = '2px 5px';
-            overlay.style.borderRadius = '3px';
-            overlay.style.fontSize = '12px';
-            overlay.style.zIndex = '10000';
-            overlay.style.pointerEvents = 'none';
-            overlay.style.left = (rect.left - 25) + 'px';
-            overlay.style.top = (rect.top - 25) + 'px';
-
-            if (rect.left < 30) {
-                overlay.style.left = rect.right + 'px';
-            }
-
-            if (rect.top < 30) {
-                overlay.style.top = rect.bottom + 'px';
-            }
-            document.body.appendChild(overlay);
-        }
-
-        const elements = arguments[0];
-        for (let i = 0; i < elements.length; i++) {
-            addIdOverlay(elements[i], i);
-        }
-
-        """
-        driver.execute_script(js_script, elements)
-    try:
-        # Wait for the page to load
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.TAG_NAME, "body"))
-        )
-        # Find all elements
-        elements = driver.find_elements(By.XPATH, "//*[@id]")
-        # Highlight elements and add overlays
-        for element in elements:
-            highlight_element(element)
-        add_id_overlays(elements)
         # Prepare data for CSV
         element_data = []
         for i, element in enumerate(elements):
-            element_id = element.get_attribute("id")
-            element_xpath = driver.execute_script(
-                "function getXPath(element) {"
-                "   if (element.id !== '')"
-                "       return 'id(\"' + element.id + '\")';"
-                "   if (element === document.body)"
-                "       return element.tagName;"
-                "   var ix = 0;"
-                "   var siblings = element.parentNode.childNodes;"
-                "   for (var i = 0; i < siblings.length; i++) {"
-                "       var sibling = siblings[i];"
-                "       if (sibling === element)"
-                "           return getXPath(element.parentNode) + '/' + element.tagName + '[' + (ix + 1) + ']';"
-                "       if (sibling.nodeType === 1 && sibling.tagName === element.tagName)"
-                "           ix++;"
-                "   }"
-                "}"
-                "return getXPath(arguments[0]);", element
-            )
+            element_id = element.get_attribute('id')
+            element_xpath = element.evaluate('function getXPath(element) {'
+                                             '   if (element.id !== "")'
+                                             '       return \'id("\' + element.id + \'")\';'
+                                             '   if (element === document.body)'
+                                             '       return element.tagName;'
+                                             '   var ix = 0;'
+                                             '   var siblings = element.parentNode.childNodes;'
+                                             '   for (var i = 0; i < siblings.length; i++) {'
+                                             '       var sibling = siblings[i];'
+                                             '       if (sibling === element)'
+                                             '           return getXPath(element.parentNode) + "/" + element.tagName + "[" + (ix + 1) + "]";'
+                                             '       if (sibling.nodeType === 1 && sibling.tagName === element.tagName)'
+                                             '           ix++;'
+                                             '   }'
+                                             '}'
+                                             'return getXPath(this);')
             element_data.append([i, element_id, element_xpath])
+
         # Write to CSV
         with open(output_file, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['ID', 'Element ID', 'XPath'])
             writer.writerows(element_data)
-        print(f"Element data has been written to {output_file}")
-        # Keep the browser open for inspection
-        input("Press Enter to close the browser...")
-    finally:
-        driver.quit()
+
+        browser.close()
+
+    print(f"Element data has been written to {output_file}")
+    return element_data
 
 def setup_interactive_browser(url):
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--start-maximized")
-    
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    driver.get(url)
+    playwright = sync_playwright().start()
+    browser = playwright.chromium.launch(headless=True)
+    page = browser.new_page()
+    page.goto(url)
     
     js_code = """
     var selectedElements = [];
@@ -564,14 +506,14 @@ def setup_interactive_browser(url):
         localStorage.setItem('selectedElements', JSON.stringify(selectedElements));
     }, true);
     """
-    driver.execute_script(js_code)
-    return driver
+    page.evaluate(js_code)
+    return page, browser, playwright
 
-def get_selected_elements(driver):
+def get_selected_elements(page):
     try:
-        elements = driver.execute_script("return localStorage.getItem('selectedElements');")
+        elements = page.evaluate("() => localStorage.getItem('selectedElements')")
         return json.loads(elements) if elements else []
-    except WebDriverException:
+    except Exception:
         return None
 
 def generate_test_scenarios(url, selected_elements, screenshot):
@@ -787,19 +729,20 @@ def streamlit_interface():
                 st.session_state.driver = None
             
             if url and st.button("Start Element Selection"):
-                if st.session_state.driver:
+                if 'page' in st.session_state:
                     try:
-                        st.session_state.driver.quit()
+                        st.session_state.browser.close()
+                        st.session_state.playwright.stop()
                     except:
                         pass
                 
-                st.session_state.driver = setup_interactive_browser(url)
+                st.session_state.page, st.session_state.browser, st.session_state.playwright = setup_interactive_browser(url)
                 st.write("Browser opened. Please select elements on the webpage.")
                 st.write("Click 'Generate Test Scenarios' when you're done selecting elements.")
             
-            if st.session_state.driver:
+            if 'page' in st.session_state:
                 if st.button("Check Selected Elements"):
-                    selected_elements = get_selected_elements(st.session_state.driver)
+                    selected_elements = get_selected_elements(st.session_state.page)
                     if selected_elements:
                         st.write("Currently selected elements:")
                         st.write(selected_elements)
@@ -807,16 +750,12 @@ def streamlit_interface():
                         st.write("No elements selected yet.")
                 
                 if st.button("Generate Test Scenarios"):
-                    selected_elements = get_selected_elements(st.session_state.driver)
+                    selected_elements = get_selected_elements(st.session_state.page)
                     if selected_elements is not None:
-                        try:
-                            screenshot = st.session_state.driver.get_screenshot_as_png()
-                        except WebDriverException:
-                            st.error("Unable to capture screenshot. Browser may have been closed.")
-                            screenshot = None
+                        screenshot = st.session_state.page.screenshot()
                         
                         if screenshot:
-                            st.image(Image.open(io.BytesIO(screenshot)), caption="Webpage with Selected Elements", use_column_width=True)
+                            st.image(screenshot, caption="Webpage with Selected Elements", use_column_width=True)
                         
                         test_scenarios = generate_test_scenarios(url, selected_elements, screenshot)
                         st.write("Generated Test Scenarios:")
@@ -826,10 +765,13 @@ def streamlit_interface():
                     
                     # Close the browser after generating scenarios
                     try:
-                        st.session_state.driver.quit()
+                        st.session_state.browser.close()
+                        st.session_state.playwright.stop()
                     except:
                         pass
-                    st.session_state.driver = None
+                    del st.session_state.page
+                    del st.session_state.browser
+                    del st.session_state.playwright
  
 if __name__ == "__main__":
     streamlit_interface()
