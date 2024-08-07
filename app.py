@@ -517,8 +517,9 @@ def setup_interactive_browser(url):
     chrome_options = Options()
     chrome_options.add_argument("--start-maximized")
     chrome_options.add_experimental_option("detach", True)
-    driver = webdriver.Chrome(options=chrome_options)
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     driver.get(url)
+    return driver
     
     js_code = """
     var selectedElements = [];
