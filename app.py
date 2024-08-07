@@ -22,6 +22,7 @@ from typing import List, Tuple, Dict
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Initialize the LLM and other required components
 llm = Gemini(model_name="models/gemini-1.5-flash-latest", api_key=os.getenv("GOOGLE_API_KEY"))
