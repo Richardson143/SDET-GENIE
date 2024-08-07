@@ -22,6 +22,8 @@ from typing import List, Tuple, Dict
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Initialize the LLM and other required components
@@ -387,7 +389,16 @@ def generate_gherkin_feature(user_story, detail_level):
 def streamlit_webagent_demo(objective: str, url: str):
     st.write(f"Objective: {objective}")
     st.write(f"Starting URL: {url}")
-    selenium_driver = SeleniumDriver(headless=False)
+    
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    
+    selenium_driver = SeleniumDriver(driver=driver)
     world_model = WorldModel.from_context(context)
     action_engine = ActionEngine.from_context(context, selenium_driver)
     agent = WebAgent(world_model, action_engine)
@@ -425,7 +436,13 @@ def streamlit_webagent_demo(objective: str, url: str):
     st.json(result.__dict__)
 
 def identify_elements_and_generate_csv(url, output_file='elements.csv'):
-    driver = webdriver.Chrome()  # You may need to specify the path to your ChromeDriver
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
     driver.get(url)
 
     def highlight_element(element):
@@ -516,11 +533,14 @@ def identify_elements_and_generate_csv(url, output_file='elements.csv'):
 
 def setup_interactive_browser(url):
     chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--start-maximized")
-    chrome_options.add_experimental_option("detach", True)
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+    
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
     driver.get(url)
-    return driver
     
     js_code = """
     var selectedElements = [];
