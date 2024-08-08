@@ -23,6 +23,14 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+import nltk
+
+# Set up a temporary directory for NLTK data
+nltk_data_dir = tempfile.mkdtemp()
+os.environ['NLTK_DATA'] = nltk_data_dir
+
+# Download NLTK data to the temporary directory
+nltk.download('stopwords', download_dir=nltk_data_dir, quiet=True)
 
 # Initialize the LLM and other required components
 llm = Gemini(model_name="models/gemini-1.5-flash-latest", api_key=os.getenv("GOOGLE_API_KEY"))
@@ -778,58 +786,38 @@ def streamlit_interface():
                 st.code(csv_content, language="csv")
 
         elif option == "Generate Test Scenarios":
-            lottie_test = load_lottieurl('https://lottie.host/8bf5d28b-0256-41ef-9719-b2c1a7369150/48W8wvE9Gd.json')
-            st_lottie(lottie_test, speed=1, height=300, key="test")
-            st.title("Interactive Test Scenario Generator")
-            url = st.text_input("Enter the URL of the webpage you want to test:")
-            
-            if 'driver' not in st.session_state:
-                st.session_state.driver = None
-            
-            if url and st.button("Start Element Selection"):
-                if st.session_state.driver:
-                    try:
-                        st.session_state.driver.quit()
-                    except:
-                        pass
-                
-                st.session_state.driver = setup_interactive_browser(url)
-                st.write("Browser opened. Please select elements on the webpage.")
-                st.write("Click 'Generate Test Scenarios' when you're done selecting elements.")
-            
-            if st.session_state.driver:
-                if st.button("Check Selected Elements"):
-                    selected_elements = get_selected_elements(st.session_state.driver)
+        lottie_test = load_lottieurl('https://lottie.host/8bf5d28b-0256-41ef-9719-b2c1a7369150/48W8wvE9Gd.json')
+        st_lottie(lottie_test, speed=1, height=300, key="test")
+        st.title("Interactive Test Scenario Generator")
+        url = st.text_input("Enter the URL of the webpage you want to test:")
+        
+        if url and st.button("Generate Test Scenarios"):
+            with st.spinner("Analyzing webpage and generating test scenarios..."):
+                try:
+                    driver = setup_interactive_browser(url)
+                    
+                    # Wait for a moment to ensure the page is fully loaded and elements are selected
+                    time.sleep(5)
+                    
+                    selected_elements = get_selected_elements(driver)
+                    screenshot = driver.get_screenshot_as_png()
+                    driver.quit()
+
+                    if screenshot:
+                        st.image(Image.open(io.BytesIO(screenshot)), caption="Webpage Screenshot", use_column_width=True)
+                    
                     if selected_elements:
-                        st.write("Currently selected elements:")
-                        st.write(selected_elements)
-                    else:
-                        st.write("No elements selected yet.")
-                
-                if st.button("Generate Test Scenarios"):
-                    selected_elements = get_selected_elements(st.session_state.driver)
-                    if selected_elements is not None:
-                        try:
-                            screenshot = st.session_state.driver.get_screenshot_as_png()
-                        except WebDriverException:
-                            st.error("Unable to capture screenshot. Browser may have been closed.")
-                            screenshot = None
-                        
-                        if screenshot:
-                            st.image(Image.open(io.BytesIO(screenshot)), caption="Webpage with Selected Elements", use_column_width=True)
+                        st.write("Selected Elements:")
+                        st.json(selected_elements)
                         
                         test_scenarios = generate_test_scenarios(url, selected_elements, screenshot)
                         st.write("Generated Test Scenarios:")
                         st.write(test_scenarios)
                     else:
-                        st.error("Unable to retrieve selected elements. Please restart the element selection process.")
-                    
-                    # Close the browser after generating scenarios
-                    try:
-                        st.session_state.driver.quit()
-                    except:
-                        pass
-                    st.session_state.driver = None
+                        st.warning("No elements were selected for analysis. This might be due to the page structure or loading issues. Please try again or try with a different URL.")
+                except Exception as e:
+                    st.error(f"An error occurred while analyzing the webpage: {str(e)}")
+                    st.error("Please make sure the URL is correct and the website is accessible.")
  
 if __name__ == "__main__":
     streamlit_interface()
