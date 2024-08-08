@@ -21,6 +21,8 @@ from typing import List, Tuple, Dict
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Initialize the LLM and other required components
 llm = Gemini(model_name="models/gemini-1.5-flash-latest", api_key=os.getenv("GOOGLE_API_KEY"))
@@ -385,7 +387,16 @@ def generate_gherkin_feature(user_story, detail_level):
 def streamlit_webagent_demo(objective: str, url: str):
     st.write(f"Objective: {objective}")
     st.write(f"Starting URL: {url}")
-    selenium_driver = SeleniumDriver(headless=False)
+    
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    
+    service = Service(ChromeDriverManager().install())
+    selenium_driver = SeleniumDriver(service=service, options=chrome_options)
+    
     world_model = WorldModel.from_context(context)
     action_engine = ActionEngine.from_context(context, selenium_driver)
     agent = WebAgent(world_model, action_engine)
@@ -423,8 +434,14 @@ def streamlit_webagent_demo(objective: str, url: str):
     st.json(result.__dict__)
 
 def identify_elements_and_generate_csv(url, output_file='elements.csv'):
-    driver = webdriver.Chrome()  # You may need to specify the path to your ChromeDriver
-    driver.get(url)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
 
     def highlight_element(element):
         driver.execute_script(
@@ -468,6 +485,7 @@ def identify_elements_and_generate_csv(url, output_file='elements.csv'):
         """
         driver.execute_script(js_script, elements)
     try:
+        driver.get(url)
         # Wait for the page to load
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.TAG_NAME, "body"))
@@ -514,9 +532,14 @@ def identify_elements_and_generate_csv(url, output_file='elements.csv'):
 
 def setup_interactive_browser(url):
     chrome_options = Options()
-    chrome_options.add_argument("--start-maximized")
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_experimental_option("detach", True)
-    driver = webdriver.Chrome(options=chrome_options)
+    
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
     driver.get(url)
     
     js_code = """
