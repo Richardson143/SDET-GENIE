@@ -23,14 +23,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-import nltk
-
-# Set up a temporary directory for NLTK data
-nltk_data_dir = tempfile.mkdtemp()
-os.environ['NLTK_DATA'] = nltk_data_dir
-
-# Download NLTK data to the temporary directory
-nltk.download('stopwords', download_dir=nltk_data_dir, quiet=True)
 
 # Initialize the LLM and other required components
 llm = Gemini(model_name="models/gemini-1.5-flash-latest", api_key=os.getenv("GOOGLE_API_KEY"))
