@@ -786,38 +786,38 @@ def streamlit_interface():
                 st.code(csv_content, language="csv")
 
         elif option == "Generate Test Scenarios":
-        lottie_test = load_lottieurl('https://lottie.host/8bf5d28b-0256-41ef-9719-b2c1a7369150/48W8wvE9Gd.json')
-        st_lottie(lottie_test, speed=1, height=300, key="test")
-        st.title("Interactive Test Scenario Generator")
-        url = st.text_input("Enter the URL of the webpage you want to test:")
-        
-        if url and st.button("Generate Test Scenarios"):
-            with st.spinner("Analyzing webpage and generating test scenarios..."):
-                try:
-                    driver = setup_interactive_browser(url)
-                    
-                    # Wait for a moment to ensure the page is fully loaded and elements are selected
-                    time.sleep(5)
-                    
-                    selected_elements = get_selected_elements(driver)
-                    screenshot = driver.get_screenshot_as_png()
-                    driver.quit()
-
-                    if screenshot:
-                        st.image(Image.open(io.BytesIO(screenshot)), caption="Webpage Screenshot", use_column_width=True)
-                    
-                    if selected_elements:
-                        st.write("Selected Elements:")
-                        st.json(selected_elements)
+            lottie_test = load_lottieurl('https://lottie.host/8bf5d28b-0256-41ef-9719-b2c1a7369150/48W8wvE9Gd.json')
+            st_lottie(lottie_test, speed=1, height=300, key="test")
+            st.title("Interactive Test Scenario Generator")
+            url = st.text_input("Enter the URL of the webpage you want to test:")
+            
+            if url and st.button("Generate Test Scenarios"):
+                with st.spinner("Analyzing webpage and generating test scenarios..."):
+                    try:
+                        driver = setup_interactive_browser(url)
                         
-                        test_scenarios = generate_test_scenarios(url, selected_elements, screenshot)
-                        st.write("Generated Test Scenarios:")
-                        st.write(test_scenarios)
-                    else:
-                        st.warning("No elements were selected for analysis. This might be due to the page structure or loading issues. Please try again or try with a different URL.")
-                except Exception as e:
-                    st.error(f"An error occurred while analyzing the webpage: {str(e)}")
-                    st.error("Please make sure the URL is correct and the website is accessible.")
- 
+                        # Wait for a moment to ensure the page is fully loaded and elements are selected
+                        time.sleep(5)
+                        
+                        selected_elements = get_selected_elements(driver)
+                        screenshot = driver.get_screenshot_as_png()
+                        driver.quit()
+    
+                        if screenshot:
+                            st.image(Image.open(io.BytesIO(screenshot)), caption="Webpage Screenshot", use_column_width=True)
+                        
+                        if selected_elements:
+                            st.write("Selected Elements:")
+                            st.json(selected_elements)
+                            
+                            test_scenarios = generate_test_scenarios(url, selected_elements, screenshot)
+                            st.write("Generated Test Scenarios:")
+                            st.write(test_scenarios)
+                        else:
+                            st.warning("No elements were selected for analysis. This might be due to the page structure or loading issues. Please try again or try with a different URL.")
+                    except Exception as e:
+                        st.error(f"An error occurred while analyzing the webpage: {str(e)}")
+                        st.error("Please make sure the URL is correct and the website is accessible.")
+     
 if __name__ == "__main__":
     streamlit_interface()
