@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: streamlit-app
-    env: python
-    buildCommand: pip install -r requirements.txt && playwright install chromium
-    startCommand: streamlit run app.py
-    envVars:
-      - key: GOOGLE_API_KEY
-        sync: false
