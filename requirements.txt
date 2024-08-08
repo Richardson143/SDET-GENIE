@@ -7,5 +7,5 @@ Requests==2.32.3
 selenium==4.23.1
 streamlit==1.29.0
 streamlit_lottie==0.0.5
-webdriver-manager==4.0.2
-playwright==1.45.1
+seleniumbase
+webdriver-manager
