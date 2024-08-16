@@ -1,3 +1,1 @@
-chromium
-chromium-driver
-google-chrome-stable
+GOOGLE_API_KEY=AIzaSyAPO8LmtX0hfpnsRYARR9hG7l7bXXohD9g
