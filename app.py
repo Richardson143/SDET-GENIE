@@ -25,6 +25,18 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from pyvirtualdisplay import Display
 
+import nltk
+import os
+
+# Set the NLTK data directory to a directory within your app's writable directory
+nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
+if not os.path.exists(nltk_data_dir):
+    os.makedirs(nltk_data_dir)
+
+nltk.data.path.append(nltk_data_dir)
+
+# Download stopwords or any other required NLTK data
+nltk.download("stopwords", download_dir=nltk_data_dir)
 # At the beginning of your script
 display = Display(visible=0, size=(1920, 1080))
 display.start()
